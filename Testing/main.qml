@@ -81,33 +81,6 @@ Window {
                 required property string author
                 required property string message
 
-                state: "invisible"
-
-                states: [
-                    State {
-                        name: "visible"
-                        PropertyChanges {
-                            target: messageBody
-                            opacity: 1
-                        }
-                    },
-                    State {
-                        name: "invisible"
-                        PropertyChanges {
-                            target: messageBody
-                            opacity: 0
-                        }
-                    }
-                ]
-
-                transitions: [
-                    Transition {
-                        from: "invisible"; to: "visible"
-                        // from: "*"; to: "*"
-                        ColorAnimation { target: messageBody; properties: "opacity"; duration: 500 }
-                    }
-                ]
-
                 Column {
                     id: messageWrapper
                     anchors.verticalCenter: parent.verticalCenter
@@ -145,6 +118,26 @@ Window {
             model: messagesModel
             orientation: ListView.Vertical
             delegate: messageElement
+            opacity: 1
+            Component.onCompleted: positionViewAtBeginning()
+
+            add: Transition {
+                    NumberAnimation {
+                        properties: "x"
+                        from: 10
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+
+                    NumberAnimation {
+                        properties: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
         }
 
         Rectangle {
@@ -157,6 +150,7 @@ Window {
             function onSendClicked() {
                 messagesModel.append({author: "William", message: messageInput.text});
                 messageInput.text = qsTr("");
+                sendButton.state = "flyOut"
             }
 
             function changeTabColor() {
@@ -198,6 +192,65 @@ Window {
                     anchors.fill: parent
                     onClicked: messageInputWrapper.onSendClicked()
                 }
+
+                state: "ground"
+
+                states: [
+                    State {
+                        name: "flyOut"
+                        PropertyChanges {
+                            target: sendButton
+                            anchors.rightMargin: -50
+                            opacity: 0
+                        }
+                    },
+
+                    State {
+                        name: "flyIn"
+                        PropertyChanges {
+                            target: sendButton
+                            anchors.rightMargin: 50
+                            opacity: 0
+                        }
+                    },
+
+                    State {
+                        name: "ground"
+                        PropertyChanges {
+                            target: sendButton
+                            anchors.rightMargin: 20
+                            opacity: 1
+                        }
+                    }
+                ]
+
+                transitions: [
+                    Transition {
+                        from: "ground"; to: "flyOut"
+                        // from: "*"; to: "*"
+                        NumberAnimation {
+                            target: sendButton
+                            properties: "anchors.rightMargin, opacity"
+                            duration: 500
+                            easing.type: Easing.InQuad;
+                        }
+                        onRunningChanged: if(running == false) {
+                                              sendButton.state = "flyIn"
+                                              sendButton.state = "ground"
+                                          }
+                    },
+
+                    Transition {
+                        from: "flyIn"; to: "ground"
+                        // from: "*"; to: "*"
+                        NumberAnimation {
+                            target: sendButton
+                            properties: "anchors.rightMargin, opacity"
+                            duration: 500
+                            easing.type: Easing.OutQuad;
+                        }
+                    }
+                ]
             }
         }
     }
