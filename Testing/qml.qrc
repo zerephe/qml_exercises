@@ -1,5 +1,15 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>EmojiPicker.qml</file>
+        <file>assets/icons/emoji/1.png</file>
+        <file>assets/icons/emoji/2.png</file>
+        <file>assets/icons/emoji/3.png</file>
+        <file>assets/icons/emoji/4.png</file>
+        <file>assets/icons/emoji/5.png</file>
+        <file>assets/icons/emoji/6.png</file>
+        <file>assets/icons/emoji/7.png</file>
+        <file>assets/icons/emoji/8.png</file>
+        <file>assets/emojis.js</file>
     </qresource>
 </RCC>

@@ -8,9 +8,9 @@ Window {
     visible: true
     title: qsTr("Hello World")
 
-    property string colorMain: "#41cd52"
+    property string colorMain: "#202c33"
     property string textColorMain: "#fff"
-    property var colors: ["#297c33", "#00ff1f", "#41cd52"]
+    property string textColorSecondary: "#667781"
 
     Item {
         id: mainContainer
@@ -64,6 +64,39 @@ Window {
             }
         }
 
+        ListView {
+            id: messagesListView
+            anchors.top: parent.top
+            anchors.bottom: emojiPicker.top
+            anchors.topMargin: tabBar.height
+            anchors.leftMargin: 10
+            width: parent.width
+            spacing: 4
+            clip: true
+            model: messagesModel
+            orientation: ListView.Vertical
+            delegate: messageElement
+            opacity: 1
+
+            add: Transition {
+                    NumberAnimation {
+                        properties: "x"
+                        from: 10
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+
+                    NumberAnimation {
+                        properties: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 500
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+        }
+
         ListModel {
             id: messagesModel
         }
@@ -76,7 +109,7 @@ Window {
                 width: parent.width*0.9
                 height: 50
                 radius: 20
-                color: "#09102B"
+                color: colorMain
 
                 required property string author
                 required property string message
@@ -107,37 +140,35 @@ Window {
             }
         }
 
-        ListView {
-            id: messagesListView
-            anchors.fill: parent
-            anchors.topMargin: tabBar.height
-            anchors.bottomMargin: messageInputWrapper.height
-            anchors.leftMargin: 10
-            spacing: 4
-            clip: true
-            model: messagesModel
-            orientation: ListView.Vertical
-            delegate: messageElement
-            opacity: 1
-            Component.onCompleted: positionViewAtBeginning()
+        EmojiPicker {
+            id: emojiPicker
+            anchors.bottom: messageInputWrapper.top
 
-            add: Transition {
-                    NumberAnimation {
-                        properties: "x"
-                        from: 10
-                        duration: 500
-                        easing.type: Easing.OutCubic
+            state: "closed"
+
+            states: [
+                State {
+                    name: "opened"
+                    PropertyChanges {
+                        target: emojiPicker
+                        height: 200
                     }
-
-                    NumberAnimation {
-                        properties: "opacity"
-                        from: 0
-                        to: 1
-                        duration: 500
-                        easing.type: Easing.OutCubic
+                },
+                State {
+                    name: "closed"
+                    PropertyChanges {
+                        target: emojiPicker
+                        height: 0
                     }
                 }
+            ]
 
+            Behavior on height {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.OutCubic;
+                }
+            }
         }
 
         Rectangle {
@@ -145,6 +176,7 @@ Window {
             anchors.bottom: parent.bottom
             width: parent.width
             height: 50
+            color: colorMain
 
 
             function onSendClicked() {
@@ -153,18 +185,43 @@ Window {
                 sendButton.state = "flyOut"
             }
 
-            function changeTabColor() {
-                tabBar.color = colors[Math.floor(Math.random()*3)];
+            Image {
+                id: emojiPickerButton
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: 10
+                width: 20; height: width
+                opacity: emojiPicker.state !== "closed" ? 1 : 0.6
+                source: "./assets/icons/emoji/1.png"
+
+                Behavior on opacity {
+                    NumberAnimation {duration: 100}
+                }
+
+                HoverHandler {
+                    cursorShape: Qt.PointingHandCursor
+                    target: emojiPickerButton
+                    onHoveredChanged: emojiPickerButtonMouseArea.cursorShape = cursorShape
+                }
+
+                MouseArea {
+                    id: emojiPickerButtonMouseArea
+                    anchors.fill: parent
+                    onClicked: {
+                        emojiPicker.state = (emojiPicker.state !== "closed") ? "closed" : "opened"
+                    }
+                }
             }
 
             TextInput {
                 id: messageInput
-                anchors.left: parent.left
+                anchors.left: emojiPickerButton.right
+                anchors.right: sendButton.left
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 20
+                anchors.leftMargin: 10
                 anchors.rightMargin: 50
                 text: qsTr("Write some message...")
-                onTextChanged: messageInputWrapper.changeTabColor()
+                color: textColorMain
 
                 Keys.onEnterPressed: messageInputWrapper.onSendClicked()
                 Keys.onReturnPressed: messageInputWrapper.onSendClicked()
@@ -184,7 +241,7 @@ Window {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 20
-                width: 30; height: 30
+                width: 20; height: width
                 source: "https://cdn-icons-png.flaticon.com/64/3682/3682321.png"
 
                 MouseArea {
