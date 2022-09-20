@@ -8,22 +8,7 @@ Item {
 
     property string emojiTabMainColor: "#202c33"
     property string selectedEmojiGroupColor: "#00a884"
-    property int selectedGroupIndex: 0
-
-    Component.onCompleted: {
-        for(let i = 1; i < 9; i++) {
-            emojiGroupModel.append({iconUrl: `./assets/icons/emoji/${i}.png`});
-        }
-
-        emojiSectionViewerModel.append({ section: "smileys"})
-        emojiSectionViewerModel.append({ section: "animals"})
-        emojiSectionViewerModel.append({ section: "food"})
-        emojiSectionViewerModel.append({ section: "activities"})
-        emojiSectionViewerModel.append({ section: "travel"})
-        emojiSectionViewerModel.append({ section: "objects"})
-        emojiSectionViewerModel.append({ section: "symbols"})
-        emojiSectionViewerModel.append({ section: "flags"})
-    }
+    property int emojiGroupCount: Object.keys(Emojis.emojis).length
 
     Rectangle {
         id: emojiContainer
@@ -41,12 +26,27 @@ Item {
                 id: emojiGroups
                 anchors.fill: parent
                 orientation: ListView.Horizontal
-                model: emojiGroupModel
+                model: Object.keys(Emojis.emojis)
                 delegate: emojiGroupIconComponent
-            }
+                highlightFollowsCurrentItem: false
+                currentIndex: getGroupIndex()
+                focus: true
 
-            ListModel {
-                id: emojiGroupModel
+                highlight: Rectangle {
+                    id: selectedEmojiGroupIdentifier
+                    anchors.bottom: parent.bottom
+                    width: parent.width/emojiGroupCount;
+                    height: 2
+                    color: selectedEmojiGroupColor
+                    x: emojiGroups.currentItem.x
+
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuad;
+                        }
+                    }
+                }
             }
 
             Component {
@@ -54,17 +54,14 @@ Item {
 
                 Rectangle {
                     id: emojiIconWrapper
-                    width: emojiGroups.width/8; height: 30
+                    width: emojiGroups.width/emojiGroupCount; height: 30
                     color: "transparent"
 
                     required property int index
-                    required property string iconUrl
 
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            selectedEmojiGroupIdentifier.x = parent.x
-                            selectedGroupIndex = index
                             emojiSectionViewer.positionViewAtIndex(index, ListView.Beginning)
                         }
                     }
@@ -74,27 +71,12 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
                         width: 15; height: width
-                        source: iconUrl
-                        opacity: selectedGroupIndex === index ? 1 : 0.5
+                        source: `./assets/icons/emoji/${index + 1}.png`
+                        opacity: emojiGroups.currentIndex === index ? 1 : 0.5
 
                         Behavior on opacity {
                             NumberAnimation { duration: 100 }
                         }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: selectedEmojiGroupIdentifier
-                anchors.top: parent.bottom
-                width: parent.width/8; height: 2
-                x: 0
-                color: selectedEmojiGroupColor
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: 200
-                        easing.type: Easing.OutQuad;
                     }
                 }
             }
@@ -106,28 +88,10 @@ Item {
             anchors.bottom: parent.bottom
             width: parent.width
             orientation: ListView.Vertical
-            model: emojiSectionViewerModel
+            model: Object.keys(Emojis.emojis)
             delegate: emojiSetGridComponent
             spacing: 5
             clip: true
-            section.property: "section"
-            section.delegate: Rectangle {
-                anchors.left: parent.left
-                anchors.margins: 5
-                implicitHeight: emojiSectionText.implicitHeight + 10
-                color: "transparent"
-                Text {
-                    id: emojiSectionText
-                    text: section
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.pixelSize: 12
-                    color: textColorSecondary
-                }
-            }
-        }
-
-        ListModel {
-            id: emojiSectionViewerModel
         }
 
         Component {
@@ -135,17 +99,30 @@ Item {
 
             Item{
                 id: emojiSetGridViewWrapper
-                width: parent.width; implicitHeight: emojiSetGridView.implicitHeight
+                width: emojiSectionViewer.width; implicitHeight: emojiSetGridView.implicitHeight
 
-                required property string section
-                required property int index
+                property string section: Object.keys(Emojis.emojis)[index]
 
                 Flow {
                     id: emojiSetGridView
                     anchors.fill: parent
 
+                    Rectangle {
+                        width: emojiSetGridViewWrapper.width
+                        height: 20
+                        color: "transparent"
+
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 5
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: section
+                            color: textColorSecondary
+                        }
+                    }
+
                     Repeater {
-                        model: Emojis.emojis[section].length
+                        model: Emojis.emojis[section]
                         delegate: emojiSetComponent
                     }
                 }
@@ -187,5 +164,15 @@ Item {
                 }
             }
         }
+    }
+
+    function getGroupIndex() {
+        if(emojiSectionViewer.indexAt(
+                    0,emojiSectionViewer.contentY) === -1) {
+            return emojiGroups.currentIndex
+        }
+
+        return emojiSectionViewer.indexAt(
+                    0,emojiSectionViewer.contentY)
     }
 }
